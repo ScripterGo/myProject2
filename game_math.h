@@ -18,6 +18,15 @@ public:
 		}
 	}
 
+	matrix3(T _data[3][3]) {
+		this->data.assign(3, vector<T>(3));
+		for (int i = 0; i < 3; i++) {
+			for (int j = 0; j < 3; j++) {
+				this->data[i][j] = _data[i][j];
+			}
+		}
+	}
+
 	void operator*(const matrix3<T>& ot) {
 		for (int i = 0; i < 3; i++) {
 			T buffer[3];
@@ -35,8 +44,8 @@ public:
 	}
 
 	void to_y_rotation(float u) {
-		T cos_u = cos(u);
-		T sin_u = sin(u);
+		T cos_u = (T) cos(u);
+		T sin_u = (T) sin(u);
 		this->data = {
 			{cos_u, (T)0, -sin_u},
 			{(T)0,(T)1,(T)0},
@@ -45,8 +54,8 @@ public:
 	}
 
 	void to_x_rotation(float u) {
-		T cos_u = cos(u);
-		T sin_u = sin(u);
+		T cos_u = (T) cos(u);
+		T sin_u = (T) sin(u);
 		this->data = {
 			{(T)1, 0, 0},
 			{(T)0, cos_u, sin_u},
@@ -54,9 +63,28 @@ public:
 		};
 	}
 
+	void to_z_rotation(float u) { //rotate around z-axis
+		T cos_u = (T) cos(u);
+		T sin_u = (T) sin(u);
+		this->data = {
+			{cos_u, -sin_u, (T)0},
+			{sin_u, cos_u, (T)0},
+			{(T)0, (T)0, (T)1}
+		};
+	}
+
 	T get(int i, int j) const {
 		return this->data[i][j];
 	}
+
+	T get_determinant() {
+		T col1 = this->data[0][0]*(this->data[1][1] * this->data[2][2] - this->data[1][2] * this->data[2][1]);
+		T col2 = this->data[0][1]*(this->data[1][0] * this->data[2][2] - this->data[1][2] * this->data[2][0]);
+		T col3 = this->data[0][2]*(this->data[1][0] * this->data[2][1] - this->data[1][1] * this->data[2][0]);
+		return col1 - col2 + col3;
+	}
+
+
 };
 
 template<typename T>

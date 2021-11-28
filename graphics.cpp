@@ -6,6 +6,7 @@
 #include<wrl.h>
 #include<d3dcompiler.h>
 #include"shapes.h"
+#include<dxgidebug.h>
 
 using namespace Microsoft::WRL;
 using namespace utility;
@@ -21,7 +22,6 @@ graphics::graphics(HWND& hwnd) {
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferCount = 1;
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-
 	sd.SampleDesc.Count = 1;
 	sd.SampleDesc.Quality = 0;
 	
@@ -49,15 +49,22 @@ graphics::graphics(HWND& hwnd) {
 	);
 	throw_ant_if(hr);
 
+
 	this->setup_pipeline(hwnd);
 }
 
-
 void graphics::render_cube(cube& C) {
-	C.generate_vertices();
-	const vertex* dat = C.get_vertex_data();
-	this->setup_IA_data(dat, C.get_vertex_count());
-	this->pContext->Draw(C.get_vertex_count(), 0u);
+	C.before_render();
+	const vertex* dat = C.get_vertex_list_data();
+	this->setup_IA_data(dat, C.get_vertex_list_count(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	this->pContext->Draw(C.get_vertex_list_count(), 0u);
+}
+
+void graphics::render_triangle(tri& T) {
+	T.before_render();
+	const vertex* dat = T.get_vertex_list_data();
+	this->setup_IA_data(dat, T.get_vertex_list_count(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	this->pContext->Draw(T.get_vertex_list_count(), 0u);
 }
 
 void graphics::setup_pipeline(HWND hwnd) {
@@ -81,7 +88,7 @@ void graphics::setup_viewport(HWND hwnd) {
 	this->pContext->RSSetViewports(1, &vp);
 }
 
-void graphics::setup_IA_data(const vertex* pData, int count) {
+void graphics::setup_IA_data(const vertex* pData, int count, D3D11_PRIMITIVE_TOPOLOGY type) {
 	HRESULT hr;
 	D3D11_BUFFER_DESC bd;
 	bd.ByteWidth = sizeof(vertex)*count;
@@ -104,20 +111,25 @@ void graphics::setup_IA_data(const vertex* pData, int count) {
 	UINT StrideOffset = 0;
 	this->pContext->IASetVertexBuffers(0u, 1, pBuffer.GetAddressOf(), &Stride, &StrideOffset);
 
-	D3D11_INPUT_ELEMENT_DESC iec;
-	iec.Format = DXGI_FORMAT_R32G32_FLOAT;
-	iec.InputSlot = 0;
-	iec.SemanticIndex = 0;
-	iec.AlignedByteOffset = 0;
-	iec.SemanticName = "Position";
-	iec.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-	iec.InstanceDataStepRate = 0;
-
-	hr = this->pDevice->CreateInputLayout(&iec, 1, this->pVertexShaderBlob->GetBufferPointer(), this->pVertexShaderBlob->GetBufferSize(), &(this->pInputLayout));
+	D3D11_INPUT_ELEMENT_DESC iec[] = {
+		{"Position", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+		{"Color", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8u, D3D11_INPUT_PER_VERTEX_DATA, 0}
+	};
+	hr = this->pDevice->CreateInputLayout(iec, 2, this->pVertexShaderBlob->GetBufferPointer(), this->pVertexShaderBlob->GetBufferSize(), &(this->pInputLayout));
 	throw_ant_if(hr);
 	
-	this->pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
+	this->pContext->IASetPrimitiveTopology(type);
 	this->pContext->IASetInputLayout(this->pInputLayout);
+}
+
+void graphics::setup_rastarizer() {
+	ComPtr<ID3D11RasterizerState> pRast = nullptr;
+	D3D11_RASTERIZER_DESC rDesc = {};
+	rDesc.FillMode = D3D11_FILL_SOLID;
+	rDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE;
+	rDesc.FrontCounterClockwise = true;
+	rDesc.DepthBias = 0;
+	rDesc.DepthBiasClamp = 0.0f;
 }
 
 void graphics::setup_render_target() {

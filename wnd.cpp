@@ -6,6 +6,7 @@
 #include<windows.h>
 #include<sstream>
 #include"shapes.h"
+#include<exception>
 
 const float PI = 3.14159f;
 
@@ -40,7 +41,7 @@ void window::initiate_window(LPCWSTR window_name = L"my window") {
 	rc.top = 300;
 	rc.bottom = 900;
 	AdjustWindowRectEx(&rc, WS_OVERLAPPEDWINDOW, false, 0);
-
+	
 	WNDCLASSEX* wc = this->desc;
 	HWND hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, wc->lpszClassName, window_name, WS_OVERLAPPEDWINDOW | WS_VISIBLE, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, NULL, NULL, NULL, this);
 	this->p_graphics = unique_ptr<graphics>(new graphics(hwnd));
@@ -83,13 +84,33 @@ int window::do_frame() {
 		inc * 2.0f
 	};
 
-	static cube t(0.0f, 0.0f, 150.0f, 100.0f);
+	static cube t(30.0f, 0.0f, 150.0f, 100.0f);
+	//static cube t2(-4.0f, 20.0f, 500.0f, 200.0f);
 
-	if (this->keyboard.is_down('D')) {
-		t.rotate_y(10.0f / 60.0f);
+	float tri_vertices[3][3] = {
+		{0.0f, 0.0f, 100.0f},
+		{20.0f, 40.0f, 150.0f},
+		{40.0f, 0.0f, 100.0f}
 	};
+
+	
+	if (this->keyboard.is_down('D')) {
+		t.rotate_y(3.0f / 60.0f);
+	};
+	if (this->keyboard.is_down('A')) {
+		t.rotate_y(-3.0f / 60.0f);
+	}
 	if (this->keyboard.is_down('S')) {
-		t.rotate_x(1.0f / 60.0f);
+		t.rotate_x(3.0f / 60.0f);
+	}
+	if (this->keyboard.is_down('W')) {
+		t.rotate_x(-3.0f / 60.0f);
+	}
+	if (this->keyboard.is_down('R')) {
+		t.rotate_z(3.0f / 60.0f);
+	}
+	if (this->keyboard.is_down('Q')) {
+		t.rotate_z(-3.0f / 60.0f);
 	}
 	this->p_graphics->render_cube(t);
 

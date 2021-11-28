@@ -16,9 +16,11 @@ public:
 	void setup_shader_pipeline();
 	void setup_render_target();
 
+	//void render_triangle();
 	void render_cube(cube& C);
-
-	void setup_IA_data(const vertex* pData, int count);
+	void render_triangle(tri& T);
+	void setup_IA_data(const vertex* pData, int count, D3D11_PRIMITIVE_TOPOLOGY type);
+	void setup_rastarizer();
 	void setup_viewport(HWND hwnd);
 	void setup_pipeline(HWND hwnd);
 
